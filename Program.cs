@@ -22,12 +22,31 @@ namespace DictationProcessor
                 var metadataCollection = GetMetadata(metadataFilePath);
 
                 // for each audio file listed in metadata:
-                // - get absolute file path
-                // - verify file checksum
-                // - generate a unique identifier
-                // - compress it
-                // - create a standalone metadata file 
+                foreach (var metadata in metadataCollection)
+                {
+                    // - get absolute file path
+                    var audioFilePath = Path.Combine(subfolder, metadata.File.FileName);
+                    // - verify file checksum
+                    var md5Checksum = GetChecksum(audioFilePath);
+                    if (md5Checksum.Replace("-", "").ToLower() != metadata.File.Md5Checksum)
+                    {
+                        throw new Exception("Checksum not verified! File corrupted?");
+                    }
+                    // - generate a unique identifier
+                    // - compress it
+                    // - create a standalone metadata file 
+                }
+                
             }
+        }
+
+        static string GetChecksum(string filePath)
+        {
+            var fileStream = File.Open(filePath, FileMode.Open);
+            var md5 = System.Security.Cryptography.MD5.Create();
+            var md5Bytes = md5.ComputeHash(fileStream);
+            fileStream.Dispose();
+            return BitConverter.ToString(md5Bytes);
         }
 
         static List<Metadata> GetMetadata(string metadataFilePath)
